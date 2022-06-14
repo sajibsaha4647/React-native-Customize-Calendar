@@ -60,14 +60,36 @@ const styles = StyleSheet.create({
 });
 
 const App = () => {
-  const [statedate, setState] = useState(
+  // '2022-06-23': {
+  //   selected: true,
+  //   endingDay: true,
+  //   backgroundColor: 'green',
+  //   selectedColor: 'gray',
+  // },
+  // '2022-06-28': {
+  //   selected: true,
+  //   endingDay: true,
+  //   backgroundColor: 'green',
+  //   selectedColor: 'gray',
+  // },
+  let [markedDate, setMarkedDate] = useState({});
+  let [departure, setDep] = useState({});
+  let [returndt, setRetun] = useState({});
+
+  const [DepartureDate, setDepartureDate] = useState(
+    moment(new Date()).format('YYYY-MM-DD'),
+  );
+  const [ReturnDate, setReturnDate] = useState(
     moment(new Date()).format('YYYY-MM-DD'),
   );
 
   const [modalVisible, setModalVisible] = useState(false);
+  const [ActiveDate, setActiveDate] = useState('Departure');
 
   return (
     <View style={styles.container}>
+      <Text>{JSON.stringify(DepartureDate)}</Text>
+      <Text>{JSON.stringify(ReturnDate)}</Text>
       <Modal
         animationType="slide"
         transparent={true}
@@ -76,53 +98,99 @@ const App = () => {
           // Alert.alert('Modal has been closed.');
           setModalVisible(!modalVisible);
         }}>
-        <Pressable
-          style={[styles.button, styles.buttonOpen, {marginVertical: 30}]}
-          onPress={() => setModalVisible(!modalVisible)}>
-          <Text style={styles.textStyle}>Dismiss modal</Text>
-        </Pressable>
+        <View style={{marginBottom: 20}}>
+          <Pressable
+            style={[styles.button, styles.buttonOpen, {marginVertical: 30}]}
+            onPress={() => {
+              setModalVisible(!modalVisible);
+            }}>
+            <Text style={styles.textStyle}>Dismiss modal</Text>
+            <Text>{JSON.stringify(DepartureDate)}</Text>
+          </Pressable>
+        </View>
+
+        <View style={{flexDirection: 'row'}}>
+          <View style={{flex: 1}}>
+            <Pressable
+              style={[styles.button, styles.buttonOpen]}
+              onPress={() => {
+                setActiveDate('Departure');
+              }}>
+              <Text style={styles.textStyle}>departure modal</Text>
+              <Text>{JSON.stringify(DepartureDate)}</Text>
+            </Pressable>
+          </View>
+          <View style={{flex: 1}}>
+            <Pressable
+              style={[styles.button, styles.buttonOpen]}
+              onPress={() => {
+                setActiveDate('Return');
+              }}>
+              <Text style={styles.textStyle}>return modal</Text>
+              <Text>{JSON.stringify(ReturnDate)}</Text>
+            </Pressable>
+          </View>
+        </View>
         <CalendarList
           style={{}}
-          onVisibleMonthsChange={months => {
-            console.log('now these months are visible', months);
-          }}
-          theme={{
-            backgroundColor: '#ffffff',
-            calendarBackground: '#ffffff',
-            textSectionTitleColor: '#b6c1cd',
-            textSectionTitleDisabledColor: '#d9e1e8',
-            selectedDayBackgroundColor: '#00adf5',
-            selectedDayTextColor: '#ffffff',
-            todayTextColor: '#00adf5',
-            dayTextColor: '#2d4150',
-            textDisabledColor: '#d9e1e8',
-            dotColor: '#00adf5',
-            selectedDotColor: '#ffffff',
-            arrowColor: 'orange',
-            disabledArrowColor: '#d9e1e8',
-            monthTextColor: 'blue',
-            indicatorColor: 'blue',
-            textDayFontFamily: 'monospace',
-            textMonthFontFamily: 'monospace',
-            textDayHeaderFontFamily: 'monospace',
-            textDayFontWeight: '300',
-            textMonthFontWeight: 'bold',
-            textDayHeaderFontWeight: '300',
-            textDayFontSize: 16,
-            textMonthFontSize: 16,
-            textDayHeaderFontSize: 16,
-          }}
           minDate={moment(new Date()).format('YYYY-MM-DD')}
+          markingType={'period'}
           onDayPress={day => {
-            console.warn(day, 'newday');
-            // let newday = day.split('T')[0];
+            if (ActiveDate == 'Departure') {
+              let x = {};
+              x[day.dateString] = {
+                startingDay: true,
+                color: '#50cebb',
+                textColor: 'red',
+              };
+              setDep(x);
+              let key = Object.keys(returndt)[0];
+              console.log(key);
+              x[key] = {
+                endingDay: true,
+                color: '#50cebb',
+                textColor: 'red',
+              };
+              setMarkedDate(x);
+            } else if (ActiveDate == 'Return') {
+              let x = {};
+              x[day.dateString] = {
+                endingDay: true,
+                color: '#50cebb',
+                textColor: 'red',
+              };
+              setRetun(x);
+              let key = Object.keys(departure)[0];
+              console.log(key);
+              x[key] = {
+                startingDay: true,
+                color: '#50cebb',
+                textColor: 'red',
+              };
 
-            setState({
-              [day.dateString]: {selected: true, selectedColor: 'blue'},
-              // "[day.dateString]": {selected: true, selectedColor: 'blue'},
-            });
+              let startSplit = key.split('-');
+              let startDay = startSplit[2];
+              let startMonth = startSplit[1];
+              let startYear = startSplit[0];
+
+              let endSplit = day.dateString.split('-');
+              let endDay = endSplit[2];
+              let endMonth = endSplit[1];
+              let endYear = endSplit[0];
+
+              // for()
+
+              setMarkedDate(x);
+            }
           }}
-          markedDates={statedate}
+          markedDates={markedDate}
+          // markedDates={
+          //   ActiveDate == ''
+          //     ? DepartureDate
+          //     : ActiveDate == 'Departure'
+          //     ? DepartureDate
+          //     : ReturnDate
+          // }
           // renderHeader={date => {
           //   console.warn(date, 'check date');
           //   return <Text>{moment(date).format('YYYY-MM-DD')}</Text>;
@@ -134,12 +202,18 @@ const App = () => {
 
       <Pressable
         style={[styles.button, styles.buttonOpen, {marginBottom: 30}]}
-        onPress={() => setModalVisible(true)}>
+        onPress={() => {
+          setActiveDate('Departure');
+          setModalVisible(true);
+        }}>
         <Text style={styles.textStyle}>Departure date</Text>
       </Pressable>
       <Pressable
         style={[styles.button, styles.buttonOpen]}
-        onPress={() => setModalVisible(true)}>
+        onPress={() => {
+          setActiveDate('Return');
+          setModalVisible(true);
+        }}>
         <Text style={styles.textStyle}>Return date</Text>
       </Pressable>
     </View>
