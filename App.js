@@ -142,6 +142,12 @@ const App = () => {
           text={`isRound ${isRound}`}
           action={() => {
             setiSRound(!isRound);
+
+            setisFromDatePicked(false);
+            setisToDatePicked(false);
+            setmarkedDates({});
+            setmarkedDatesBackup({});
+            setfromDate(null);
           }}
         />
       </View>
