@@ -128,7 +128,9 @@ const App = () => {
       <View style={{alignItems: 'center'}}>
         <CustomButton
           text={`isRound ${isRound}`}
-          action={() => setiSRound(!isRound)}
+          action={() => {
+            setiSRound(!isRound);
+          }}
         />
       </View>
       <View
@@ -139,12 +141,18 @@ const App = () => {
         }}>
         <CustomButton
           text={'Departure'}
-          action={() => setisSelectedTab('Departure')}
+          action={() => {
+            setisSelectedTab('Departure');
+            setModalVisible(true);
+          }}
         />
         {isRound ? (
           <CustomButton
             text={'Return'}
-            action={() => setisSelectedTab('Return')}
+            action={() => {
+              setisSelectedTab('Return');
+              setModalVisible(true);
+            }}
           />
         ) : null}
       </View>
@@ -165,11 +173,6 @@ const App = () => {
           onDayPress={day => onDayPress(day)}
         />
       </Modal>
-      <Pressable
-        style={[styles.button, styles.buttonOpen]}
-        onPress={() => setModalVisible(true)}>
-        <Text style={styles.textStyle}>Show Modal</Text>
-      </Pressable>
     </View>
   );
 };
