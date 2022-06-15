@@ -1,221 +1,156 @@
-import moment from 'moment';
-import React, {useEffect, useState} from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Dimensions,
-  Modal,
-  Pressable,
-  Alert,
-} from 'react-native';
-import {Calendar, CalendarList, Agenda} from 'react-native-calendars';
-const width = Dimensions.get('screen').width;
+import React, {useState} from 'react';
+import {StyleSheet, View, Text, TouchableOpacity} from 'react-native';
+import {CalendarList} from 'react-native-calendars';
+
+const XDate = require('xdate');
+
+const theme = {
+  markColor: '#B22727',
+  markTextColor: 'white',
+  markColor2: '#EE5007',
+};
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-  },
-  centeredView: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 22,
-  },
-  modalView: {
-    margin: 20,
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 35,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  button: {
-    borderRadius: 20,
-    padding: 10,
-    elevation: 2,
-  },
-  buttonOpen: {
-    backgroundColor: '#F194FF',
-  },
-  buttonClose: {
-    backgroundColor: '#2196F3',
-  },
-  textStyle: {
-    color: 'white',
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  modalText: {
-    marginBottom: 15,
-    textAlign: 'center',
   },
 });
 
 const App = () => {
-  // '2022-06-23': {
-  //   selected: true,
-  //   endingDay: true,
-  //   backgroundColor: 'green',
-  //   selectedColor: 'gray',
-  // },
-  // '2022-06-28': {
-  //   selected: true,
-  //   endingDay: true,
-  //   backgroundColor: 'green',
-  //   selectedColor: 'gray',
-  // },
-  let [markedDate, setMarkedDate] = useState({});
-  let [departure, setDep] = useState({});
-  let [returndt, setRetun] = useState({});
+  let [isRound, setiSRound] = useState(true);
+  let [isSelectedTab, setisSelectedTab] = useState('Departure');
+  let [isFromDatePicked, setisFromDatePicked] = useState(false);
+  let [isToDatePicked, setisToDatePicked] = useState(false);
+  let [markedDates, setmarkedDates] = useState({});
+  let [markedDatesBackup, setmarkedDatesBackup] = useState({});
+  let [fromDate, setfromDate] = useState(null);
 
-  const [DepartureDate, setDepartureDate] = useState(
-    moment(new Date()).format('YYYY-MM-DD'),
-  );
-  const [ReturnDate, setReturnDate] = useState(
-    moment(new Date()).format('YYYY-MM-DD'),
-  );
+  const onDayPress = day => {
+    if (
+      // (!isFromDatePicked || (isFromDatePicked && isToDatePicked)) &&
+      isSelectedTab == 'Departure'
+    ) {
+      setupStartMarker(day);
+    } else if (
+      // !isToDatePicked &&
+      isSelectedTab == 'Return'
+    ) {
+      let mkDates = {...markedDatesBackup};
+      let [mMarkedDates, range] = setupMarkedDates(
+        fromDate,
+        day.dateString,
+        mkDates,
+      );
+      if (range >= 0) {
+        setisFromDatePicked(true);
+        setisToDatePicked(true);
+        setmarkedDates({...markedDatesBackup, ...mMarkedDates});
+      } else {
+        setupStartMarker(day);
+      }
+    }
+  };
 
-  const [modalVisible, setModalVisible] = useState(false);
-  const [ActiveDate, setActiveDate] = useState('Departure');
+  const setupStartMarker = day => {
+    let mkDates = {
+      [day.dateString]: {
+        startingDay: true,
+        color: theme.markColor,
+        textColor: theme.markTextColor,
+      },
+    };
+    setisFromDatePicked(true);
+    setisToDatePicked(false);
+    setfromDate(day.dateString);
+    setmarkedDates(mkDates);
+    setmarkedDatesBackup(mkDates);
+  };
+
+  const setupMarkedDates = (fromDate, toDate, mkDates) => {
+    let mFromDate = new XDate(fromDate);
+    let mToDate = new XDate(toDate);
+    let range = mFromDate.diffDays(mToDate);
+    if (range >= 0) {
+      if (range == 0) {
+        mkDates = {
+          [toDate]: {
+            color: theme.markColor,
+            textColor: theme.markTextColor,
+          },
+        };
+      } else {
+        for (var i = 1; i <= range; i++) {
+          let tempDate = mFromDate.addDays(1).toString('yyyy-MM-dd');
+          if (i < range) {
+            mkDates[tempDate] = {
+              color: theme.markColor2,
+              textColor: theme.markTextColor,
+            };
+          } else {
+            mkDates[tempDate] = {
+              endingDay: true,
+              color: theme.markColor,
+              textColor: theme.markTextColor,
+            };
+          }
+        }
+      }
+    }
+    return [mkDates, range];
+  };
+
+  const CustomButton = ({text, action}) => (
+    <TouchableOpacity
+      onPress={action}
+      style={{
+        width: 200,
+        height: 80,
+        backgroundColor: isSelectedTab === text ? 'green' : '#eee',
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}>
+      <Text
+        style={{
+          fontSize: 20,
+          color: isSelectedTab === text ? '#FFF' : '#111',
+        }}>
+        {text}
+      </Text>
+    </TouchableOpacity>
+  );
 
   return (
     <View style={styles.container}>
-      <Text>{JSON.stringify(DepartureDate)}</Text>
-      <Text>{JSON.stringify(ReturnDate)}</Text>
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => {
-          // Alert.alert('Modal has been closed.');
-          setModalVisible(!modalVisible);
-        }}>
-        <View style={{marginBottom: 20}}>
-          <Pressable
-            style={[styles.button, styles.buttonOpen, {marginVertical: 30}]}
-            onPress={() => {
-              setModalVisible(!modalVisible);
-            }}>
-            <Text style={styles.textStyle}>Dismiss modal</Text>
-            <Text>{JSON.stringify(DepartureDate)}</Text>
-          </Pressable>
-        </View>
-
-        <View style={{flexDirection: 'row'}}>
-          <View style={{flex: 1}}>
-            <Pressable
-              style={[styles.button, styles.buttonOpen]}
-              onPress={() => {
-                setActiveDate('Departure');
-              }}>
-              <Text style={styles.textStyle}>departure modal</Text>
-              <Text>{JSON.stringify(DepartureDate)}</Text>
-            </Pressable>
-          </View>
-          <View style={{flex: 1}}>
-            <Pressable
-              style={[styles.button, styles.buttonOpen]}
-              onPress={() => {
-                setActiveDate('Return');
-              }}>
-              <Text style={styles.textStyle}>return modal</Text>
-              <Text>{JSON.stringify(ReturnDate)}</Text>
-            </Pressable>
-          </View>
-        </View>
-        <CalendarList
-          style={{}}
-          minDate={moment(new Date()).format('YYYY-MM-DD')}
-          markingType={'period'}
-          onDayPress={day => {
-            if (ActiveDate == 'Departure') {
-              let x = {};
-              x[day.dateString] = {
-                startingDay: true,
-                color: '#50cebb',
-                textColor: 'red',
-              };
-              setDep(x);
-              let key = Object.keys(returndt)[0];
-              console.log(key);
-              x[key] = {
-                endingDay: true,
-                color: '#50cebb',
-                textColor: 'red',
-              };
-              setMarkedDate(x);
-            } else if (ActiveDate == 'Return') {
-              let x = {};
-              x[day.dateString] = {
-                endingDay: true,
-                color: '#50cebb',
-                textColor: 'red',
-              };
-              setRetun(x);
-              let key = Object.keys(departure)[0];
-              console.log(key);
-              x[key] = {
-                startingDay: true,
-                color: '#50cebb',
-                textColor: 'red',
-              };
-
-              let startSplit = key.split('-');
-              let startDay = startSplit[2];
-              let startMonth = startSplit[1];
-              let startYear = startSplit[0];
-
-              let endSplit = day.dateString.split('-');
-              let endDay = endSplit[2];
-              let endMonth = endSplit[1];
-              let endYear = endSplit[0];
-
-              // for()
-
-              setMarkedDate(x);
-            }
-          }}
-          markedDates={markedDate}
-          // markedDates={
-          //   ActiveDate == ''
-          //     ? DepartureDate
-          //     : ActiveDate == 'Departure'
-          //     ? DepartureDate
-          //     : ReturnDate
-          // }
-          // renderHeader={date => {
-          //   console.warn(date, 'check date');
-          //   return <Text>{moment(date).format('YYYY-MM-DD')}</Text>;
-          // }}
-          // Set custom calendarWidth.
-          calendarWidth={width}
+      <View style={{alignItems: 'center'}}>
+        <CustomButton
+          text={`isRound ${isRound}`}
+          action={() => setiSRound(!isRound)}
         />
-      </Modal>
-
-      <Pressable
-        style={[styles.button, styles.buttonOpen, {marginBottom: 30}]}
-        onPress={() => {
-          setActiveDate('Departure');
-          setModalVisible(true);
+      </View>
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
         }}>
-        <Text style={styles.textStyle}>Departure date</Text>
-      </Pressable>
-      <Pressable
-        style={[styles.button, styles.buttonOpen]}
-        onPress={() => {
-          setActiveDate('Return');
-          setModalVisible(true);
-        }}>
-        <Text style={styles.textStyle}>Return date</Text>
-      </Pressable>
+        <CustomButton
+          text={'Departure'}
+          action={() => setisSelectedTab('Departure')}
+        />
+        {isRound ? (
+          <CustomButton
+            text={'Return'}
+            action={() => setisSelectedTab('Return')}
+          />
+        ) : null}
+      </View>
+      <CalendarList
+        theme={theme}
+        markingType={'period'}
+        current={fromDate}
+        markedDates={markedDates}
+        onDayPress={day => onDayPress(day)}
+      />
     </View>
   );
 };
