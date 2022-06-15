@@ -127,6 +127,7 @@ const App = () => {
           action={() => setiSRound(!isRound)}
         />
       </View>
+
       <View
         style={{
           flexDirection: 'row',
