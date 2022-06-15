@@ -7,6 +7,7 @@ import {
   Modal,
   Alert,
   Pressable,
+  ToastAndroid,
 } from 'react-native';
 import {CalendarList, Calendar} from 'react-native-calendars';
 import moment from 'moment';
@@ -29,12 +30,16 @@ const App = () => {
   let [markedDatesBackup, setmarkedDatesBackup] = useState({});
   let [fromDate, setfromDate] = useState(null);
 
+  let [checkDeparture, setcheckDeparture] = useState(false);
+
   const onDayPress = day => {
     if (
       // (!isFromDatePicked || (isFromDatePicked && isToDatePicked)) &&
       isSelectedTab == 'Departure'
     ) {
       setupStartMarker(day);
+
+      setcheckDeparture(true);
     } else if (
       // !isToDatePicked &&
       isSelectedTab == 'Return'
@@ -45,6 +50,13 @@ const App = () => {
         day.dateString,
         mkDates,
       );
+
+      console.warn(mMarkedDates, 'mMarkedDates');
+      console.warn(range, 'range');
+      console.warn(fromDate, 'fromDate');
+      console.warn(day.dateString, 'dateString');
+      console.warn(mkDates, 'mkDates');
+
       if (range >= 0) {
         setisFromDatePicked(true);
         setisToDatePicked(true);
@@ -150,8 +162,16 @@ const App = () => {
           <CustomButton
             text={'Return'}
             action={() => {
-              setisSelectedTab('Return');
-              setModalVisible(true);
+              if (checkDeparture == false) {
+                ToastAndroid.showWithGravity(
+                  'Please select departure date first',
+                  ToastAndroid.SHORT,
+                  ToastAndroid.CENTER,
+                );
+              } else {
+                setisSelectedTab('Return');
+                setModalVisible(true);
+              }
             }}
           />
         ) : null}
